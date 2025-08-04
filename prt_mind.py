@@ -1,4 +1,4 @@
-
+"""
 DocuMental: An Intelligent Printer Agent
 
 This is the main script that ties all the modules together. It runs an
@@ -7,9 +7,11 @@ and sends notifications to the user.
 """
 
 import time
-from monitor import watch_printer_queue
+
 from brain import get_llm_response
 from communication import notify_user
+from monitor import watch_printer_queue
+
 
 def main():
     """
@@ -32,7 +34,7 @@ def main():
     print("Simulating a printer event for demonstration purposes.")
     
     # 3. When an event is detected, it passes the information to the Brain Module.
-simulated_event = "Job ID 5: Status change to 'ERROR' - Out of Paper"
+    simulated_event = "Job ID 5: Status change to 'ERROR' - Out of Paper"
     print(f"Detected Event: {simulated_event}")
     
     llm_message = get_llm_response(simulated_event)

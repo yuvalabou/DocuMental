@@ -1,7 +1,3 @@
-That's a good move. A solid README is a must. Here's one, clean and to the point.
-
------
-
 # DocuMental: An Intelligent Printer Agent
 
 Prt-Mind is a Windows-based printer agent that gives your printer a voice. Using a local "nano" LLM, it monitors your print queue and translates technical error codes and status updates into concise, human-friendly desktop notifications. The entire system is local, private, and fast.
@@ -22,12 +18,12 @@ Prt-Mind is a Windows-based printer agent that gives your printer a voice. Using
 
 ## Getting Started
 
-1.  **Install Python:** Make sure you have Python 3 installed and configured on your system.
-2.  **Install Dependencies:** From your terminal, install the required Python libraries.
+1. **Install Python:** Make sure you have Python 3 installed and configured on your system.
+2. **Install Dependencies:** From your terminal, install the required Python libraries.
     ```
     pip install pywin32 plyer requests
     ```
-3.  **Set up Ollama:**
+3. **Set up Ollama:**
       * Download and install **Ollama** for Windows.
       * From your terminal, pull a small, fast model. For example:
         ```
@@ -37,7 +33,7 @@ Prt-Mind is a Windows-based printer agent that gives your printer a voice. Using
 4.  **Configure:**
       * Copy the `prt_mind.py` script to a directory of your choice.
       * Open the script and configure your printer's name. You can find this in your Windows printer settings.
-5.  **Run the Agent:**
+5. **Run the Agent:**
     ```
     python prt_mind.py
     ```

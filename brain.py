@@ -7,6 +7,7 @@ human-readable message using a local Large Language Model (LLM) via Ollama.
 
 import requests
 
+
 def get_llm_response(event_string):
     """
     Generates a human-readable message from a printer event string.

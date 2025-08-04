@@ -7,7 +7,9 @@ LLM or send notifications. It simply logs or prints out what's happening.
 """
 
 import time
+
 import win32print
+
 
 def watch_printer_queue(printer_name="Microsoft Print to PDF"):
     """
