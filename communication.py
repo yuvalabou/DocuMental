@@ -1,12 +1,13 @@
-
 """
-The Communication Module
+The Communication Module: The Mouthpiece
 
-This module handles the final output. It's a simple, single-purpose function
-that displays a desktop notification.
+This module is the agent's voice. It takes a fully-formed thought (a title
+and a message) and broadcasts it to the user's desktop, ensuring no act of
+printing goes unnoticed or unjudged.
 """
 
 from plyer import notification
+
 
 def notify_user(title, message):
     """
@@ -24,7 +25,7 @@ def notify_user(title, message):
             title=title,
             message=message,
             app_name="DocuMental",
-            timeout=10  # Notification will disappear after 10 seconds
+            timeout=5  # Notification will disappear after 10 seconds
         )
         print(f"Notification sent: '{title}'")
     except Exception as e:
@@ -41,3 +42,4 @@ if __name__ == '__main__':
         "If you see this, the communication module is working!"
     )
     print("Test complete.")
+    exit(0)

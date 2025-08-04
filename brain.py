@@ -1,14 +1,22 @@
 """
-The Brain Module
+The Brain Module: The Seat of Consciousness
 
-This module takes a structured event from the monitor and turns it into a
-human-readable message using a local Large Language Model (LLM) via Ollama.
+This module is where the magic happens. It takes a dry, technical event string
+from the monitor, combines it with the printer's established personality, and
+consults the local Large Language Model (LLM) to form a thought.
+
+It's responsible for connecting to the LLM server, dynamically figuring out
+which model to talk to, and cleaning up the LLM's response to ensure it's just
+the witty notification and not a rambling monologue.
 """
 
 import requests
 
+from const import LM_STUDIO_ENDPOINT
+from personality import SYSTEM_PROMPT
 
-def get_llm_response(event_string):
+
+def get_llm_response(event_string: str) -> str:
     """
     Generates a human-readable message from a printer event string.
 
@@ -23,39 +31,66 @@ def get_llm_response(event_string):
         str: The LLM's generated response as a simple string.
              Returns an error message if the request fails.
     """
-    # --- To be implemented ---
-    # 1. Construct a prompt for the local LLM.
-    #    - The prompt should provide context and ask the LLM to act as a
-    #      helpful printer assistant.
-    prompt = f"""
-    Act as a helpful but slightly witty printer assistant.
-    A printer just reported the following event: '{event_string}'.
-    Translate this technical event into a short, user-friendly notification
-    (less than 25 words).
-    """
+    # 1. Get the available model name from the server
+    try:
+        model_response = requests.get(f"{LM_STUDIO_ENDPOINT}/models")
+        model_response.raise_for_status()
+        model_name = model_response.json().get("data", [{}])[0].get("id")
+        if not model_name:
+            return "Error: Could not determine the model name from LM Studio."
+    except requests.exceptions.RequestException as e:
+        return f"Error connecting to LM Studio to get model list: {e}"
+    except IndexError:
+        return "Error: No models available in LM Studio."
 
-    # 2. Send the prompt to your local Ollama server.
-    #    - Define the Ollama endpoint and the model to use.
-    ollama_endpoint = "http://localhost:11434/api/generate"
-    model_name = "phi-3-mini" # Make sure you have pulled this model with `ollama pull phi-3-mini`
+    # 2. Construct the prompt in the OpenAI chat format.
+    #    - The "system" message sets the personality and, crucially, the output format.
+    #    - The "user" message provides the specific, real-time event.
+    messages = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT
+        },
+        {
+            "role": "user",
+            "content": f"Translate the following event: '{event_string}'"
+        }
+    ]
 
+    # 3. Send the prompt to your LM Studio server.
     try:
         response = requests.post(
-            ollama_endpoint,
+            f"{LM_STUDIO_ENDPOINT}/chat/completions",
             json={
                 "model": model_name,
-                "prompt": prompt,
-                "stream": False, # We want the full response at once
+                "messages": messages,
+                "temperature": 0.7,
+                "stream": False,
             },
-            timeout=20 # 20 seconds timeout
+            timeout=20
         )
-        response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
+        response.raise_for_status()
 
-        # 3. Return the LLM's response as a simple string.
-        return response.json().get("response", "No response content from LLM.").strip()
+        # 4. Extract the raw response content.
+        raw_content = response.json()['choices'][0]['message']['content'].strip()
+
+        # 5. Defensively parse the response to remove "thinking" steps.
+        #    - This looks for common conversational markers like "Here's the notification:"
+        #      or quotation marks and extracts only the final message.
+        if '"' in raw_content:
+            # Extract content within the first pair of double quotes
+            return raw_content.split('"')[1].strip()
+        if ':' in raw_content:
+            # Take the part after the last colon, assuming it's the final message
+            return raw_content.split(':')[-1].strip()
+
+        # If no special markers are found, return the cleaned-up raw content
+        return raw_content
 
     except requests.exceptions.RequestException as e:
-        return f"Error communicating with Ollama: {e}"
+        return f"Error communicating with LM Studio: {e}"
+    except (KeyError, IndexError) as e:
+        return f"Error parsing response from LM Studio: {e}. Response: {response.text}"
 
 
 if __name__ == '__main__':
