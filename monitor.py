@@ -8,8 +8,9 @@ structured event. It is the source of all office gossip.
 """
 
 import time
-import win32print
+
 import pywintypes
+import win32print
 
 from const import JOB_STATUS_MAP, Colors
 

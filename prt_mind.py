@@ -11,8 +11,8 @@ import time
 
 from brain import get_llm_response
 from communication import notify_user
-from monitor import watch_printer_queue, get_available_printers
 from const import Colors
+from monitor import get_available_printers, watch_printer_queue
 
 
 def main():
