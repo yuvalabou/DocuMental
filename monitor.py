@@ -35,7 +35,7 @@ def watch_printer_queue(printer_name: str):
         str: A formatted string describing the printer event.
     """
     print(f"Starting to monitor printer: {printer_name}")
-    last_jobs = {}
+    last_jobs: dict = {}
     printer_handle = win32print.OpenPrinter(printer_name)
 
     try:
@@ -60,7 +60,7 @@ def watch_printer_queue(printer_name: str):
                 last_jobs = current_jobs
             except pywintypes.error as e:
                 yield f"{Colors.RED}Error connecting to printer: {e}. Retrying...{Colors.RESET}"
-            
+
             time.sleep(5)
     finally:
         win32print.ClosePrinter(printer_handle)
@@ -71,14 +71,14 @@ if __name__ == '__main__':
     printers = get_available_printers()
     for i, p_name in enumerate(printers):
         print(f"  {Colors.CYAN}[{i}]{Colors.RESET} {p_name}")
-    
+
     if not printers:
         print(f"{Colors.RED}No printers found. Exiting.{Colors.RESET}")
     else:
         try:
             choice = int(input(f"\n{Colors.YELLOW}Select a printer to monitor (number): {Colors.RESET}"))
             chosen_printer = printers[choice]
-            
+
             print(f"\n--- Monitoring {Colors.GREEN}{chosen_printer}{Colors.RESET} --- (Press Ctrl+C to stop)")
             for event in watch_printer_queue(chosen_printer):
                 print(f"{Colors.MAGENTA}[EVENT]{Colors.RESET} {event}")

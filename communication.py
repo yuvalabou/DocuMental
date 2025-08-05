@@ -6,16 +6,18 @@ and a message) and broadcasts it to the user's desktop, ensuring no act of
 printing goes unnoticed or unjudged.
 """
 
+import sys
+
 from plyer import notification
 
 
-def notify_user(title, message):
+def notify_user(title: str, message: str):
     """
     Displays a desktop notification.
 
     Args:
-        title (str): The title of the notification.
-        message (str): The main content of the notification.
+        title: The title of the notification.
+        message: The main content of the notification.
     """
     # --- To be implemented ---
     # 1. Use plyer to display a desktop notification.
@@ -25,7 +27,7 @@ def notify_user(title, message):
             title=title,
             message=message,
             app_name="DocuMental",
-            timeout=5  # Notification will disappear after 10 seconds
+            timeout=5  # Notification will disappear after defined seconds
         )
         print(f"Notification sent: '{title}'")
     except Exception as e:
@@ -42,4 +44,4 @@ if __name__ == '__main__':
         "If you see this, the communication module is working!"
     )
     print("Test complete.")
-    exit(0)
+    sys.exit()

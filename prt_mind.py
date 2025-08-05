@@ -35,7 +35,7 @@ def main():
     print(f"{Colors.YELLOW}Available printers:{Colors.RESET}")
     for i, printer_name in enumerate(printers):
         print(f"  {Colors.CYAN}[{i}]{Colors.RESET} {printer_name}")
-    
+
     try:
         choice = int(input(f"\nEnter the number of the printer you want to monitor: "))
         if not 0 <= choice < len(printers):
@@ -64,7 +64,6 @@ def main():
             print("-" * 50)
     except KeyboardInterrupt:
         print(f"\n{Colors.YELLOW}Monitoring stopped by user. Goodbye!{Colors.RESET}")
-
 
 
 if __name__ == "__main__":

@@ -22,18 +22,10 @@ def get_llm_response(event_string: str) -> str:
 
     This function constructs a prompt for a local LLM, sends it to an Ollama
     server, and returns the LLM's response.
-
-    Args:
-        event_string (str): A structured string describing the printer event.
-                            (e.g., "Job ID 124: Status change to 'ERROR' - Paper Jam")
-
-    Returns:
-        str: The LLM's generated response as a simple string.
-             Returns an error message if the request fails.
     """
     # 1. Get the available model name from the server
     try:
-        model_response = requests.get(f"{LM_STUDIO_ENDPOINT}/models")
+        model_response = requests.get(f"{LM_STUDIO_ENDPOINT}/models", timeout=10)
         model_response.raise_for_status()
         model_name = model_response.json().get("data", [{}])[0].get("id")
         if not model_name:

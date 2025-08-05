@@ -33,3 +33,5 @@ class Colors:
     BLUE = "\033[94m"
     MAGENTA = "\033[95m"
     CYAN = "\033[96m"
+
+PRE_DEFINED_PATTERNS: list[str] = ["netfabb",]
