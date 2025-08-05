@@ -1,14 +1,13 @@
 """
 The Communication Module: The Mouthpiece
 
-This module is the agent's voice. It takes a fully-formed thought (a title
-and a message) and broadcasts it to the user's desktop, ensuring no act of
-printing goes unnoticed or unjudged.
+This module is the agent's voice. It provides distinct channels for visual
+and auditory notifications, allowing the user to see and/or hear what the
+printer is thinking.
 """
 
 import sys
 import pyttsx3
-
 from plyer import notification
 
 # Initialize the TTS engine globally to avoid re-initializing it on every call
@@ -18,21 +17,9 @@ except Exception as e:
     engine = None
     print(f"Could not initialize TTS engine: {e}")
 
-
-def speak_message(message: str):
-    """
-    Uses the TTS engine to speak the given message.
-    """
-    if engine:
-        try:
-            engine.say(message)
-            engine.runAndWait()
-        except Exception as e:
-            print(f"Error in TTS: {e}")
-
 def notify_user(title: str, message: str):
     """
-    Displays a desktop notification and speaks the message.
+    Displays a desktop notification.
 
     Args:
         title: The title of the notification.
@@ -43,24 +30,46 @@ def notify_user(title: str, message: str):
             title=title,
             message=message,
             app_name="DocuMental",
-            timeout=5  # Notification will disappear after defined seconds
+            timeout=10  # Notification will disappear after defined seconds
         )
-        print(f"Notification sent: '{title}'")
+        print(f"Desktop notification sent: '{title}'")
+    except NotImplementedError:
+        print("Desktop notifications not supported on this system.")
     except Exception as e:
         # If plyer fails, just print to console.
-        print(f"Error sending notification: {e}")
+        print(f"Error sending desktop notification: {e}")
         print(f"Title: {title}\nMessage: {message}")
 
-    # Speak the message aloud.
-    speak_message(message)
+def speak_message(message: str):
+    """
+    Uses the TTS engine to speak the given message aloud.
 
+    Args:
+        message: The text to be spoken.
+    """
+    if engine:
+        try:
+            print("Speaking message...")
+            engine.say(message)
+            engine.runAndWait()
+            print("Finished speaking.")
+        except Exception as e:
+            print(f"Error in TTS: {e}")
+    else:
+        print("TTS engine not available.")
 
 if __name__ == '__main__':
     # This allows you to test the communication module independently.
-    print("Testing desktop notification and TTS...")
-    notify_user(
-        "Test Notification",
-        "If you see this and hear me, the communication module is working!"
-    )
-    print("Test complete.")
+    print("--- Testing Communication Channels ---")
+    
+    test_title = "Test Notification"
+    test_message = "If you see this, the visual notification is working."
+    print(f"\n1. Testing Desktop Notification...")
+    notify_user(test_title, test_message)
+    
+    spoken_message = "And if you can hear this, the audio is working."
+    print(f"\n2. Testing Text-to-Speech...")
+    speak_message(spoken_message)
+    
+    print("\n--- Test Complete ---")
     sys.exit()
