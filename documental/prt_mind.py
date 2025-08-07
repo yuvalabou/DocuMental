@@ -1,30 +1,36 @@
-DocuMental: The Main Orchestrator of Printer Discontent
+"""DocuMental: The Main Orchestrator of Printer Discontent
 
 This is the main script that ties all the modules together. It awakens the
 agent, discovers all available printers, and runs an infinite loop to listen
 for events, consult the brain, and broadcast the resulting snark to the user.
+"""
 
-
-import threading
 import queue
+import threading
 import time
 
+import pythoncom
 from brain import get_llm_response
 from communication import notify_user, speak_message
 from const import Colors
 from monitor import get_available_printers, watch_printer_queue
 
+
 def printer_monitoring_worker(printer_name: str, event_queue: queue.Queue):
     """
     A worker thread that monitors a single printer and puts events into a queue.
+    It initializes COM for pywin32 to work correctly in a multi-threaded context.
     """
     try:
+        pythoncom.CoInitialize()
         for event in watch_printer_queue(printer_name):
             event_queue.put((printer_name, event))
     except Exception as e:
         error_message = f"Error in monitor thread for '{printer_name}': {e}"
         print(f"{Colors.RED}{error_message}{Colors.RESET}")
         event_queue.put((printer_name, error_message))
+    finally:
+        pythoncom.CoUninitialize()
 
 def main():
     """
@@ -60,13 +66,15 @@ def main():
                 print(f"{Colors.MAGENTA}Detected Event on '{printer_name}':{Colors.RESET} {event}")
 
                 llm_message = get_llm_response(event)
+
+                if llm_message.startswith("Error:"):
+                    print(f"{Colors.RED}{llm_message}{Colors.RESET}")
+                    continue # Skip to the next event
+
                 print(f"{Colors.BLUE}LLM Response:{Colors.RESET} \"{llm_message}\" ")
 
                 # --- Dispatch Notifications ---
-                # 1. Visual desktop notification
                 notify_user(f"Printer Alert: {printer_name}", llm_message)
-                
-                # 2. Spoken audio notification
                 speak_message(llm_message)
                 
                 print("-" * 50)

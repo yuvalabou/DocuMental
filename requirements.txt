@@ -1,3 +1,4 @@
 requests
 plyer
 pywin32
+pyttsx3
