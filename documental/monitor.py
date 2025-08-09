@@ -8,9 +8,11 @@ structured event. It is the source of all office gossip.
 """
 
 import time
+
 import pywintypes
 import win32print
 from const import JOB_STATUS_MAP, Colors
+
 
 def get_available_printers() -> list:
     """Returns a list of all installed printer names."""
@@ -21,9 +23,11 @@ def get_available_printers() -> list:
         print(f"{Colors.RED}Error enumerating printers: {e}{Colors.RESET}")
         return []
 
+
 def get_job_status_string(status_code):
     """Converts a status code into a descriptive string."""
     return JOB_STATUS_MAP.get(status_code, f"Unknown Status ({status_code})")
+
 
 def watch_printer_queue(printer_name: str):
     """
@@ -36,7 +40,9 @@ def watch_printer_queue(printer_name: str):
         yield f"{Colors.RED}Fatal error opening printer '{printer_name}': {e}{Colors.RESET}"
         return
 
-    print(f"{Colors.GREEN}Successfully opened printer {printer_name}. Starting monitoring loop...{Colors.RESET}")
+    print(
+        f"{Colors.GREEN}Successfully opened printer {printer_name}. Starting monitoring loop...{Colors.RESET}"
+    )
     last_jobs: dict = {}
 
     try:
@@ -48,16 +54,18 @@ def watch_printer_queue(printer_name: str):
                 if not current_jobs_info:
                     print(f"{Colors.YELLOW}No jobs found in queue.{Colors.RESET}")
                 else:
-                    print(f"{Colors.GREEN}Found {len(current_jobs_info)} job(s).{Colors.RESET}")
+                    print(
+                        f"{Colors.GREEN}Found {len(current_jobs_info)} job(s).{Colors.RESET}"
+                    )
 
-                current_jobs = {job['JobId']: job for job in current_jobs_info}
+                current_jobs = {job["JobId"]: job for job in current_jobs_info}
 
                 # Check for new jobs or status changes
                 for job_id, job in current_jobs.items():
-                    status_str = get_job_status_string(job['Status'])
+                    status_str = get_job_status_string(job["Status"])
                     if job_id not in last_jobs:
                         yield f"Job ID {job_id}: New job, '{job['pDocument']}' with status '{status_str}'"
-                    elif job['Status'] != last_jobs[job_id]['Status']:
+                    elif job["Status"] != last_jobs[job_id]["Status"]:
                         yield f"Job ID {job_id}: Status change to '{status_str}' for document '{job['pDocument']}'"
 
                 # Check for completed or deleted jobs
@@ -77,7 +85,8 @@ def watch_printer_queue(printer_name: str):
         print(f"Closing printer handle for {printer_name}")
         win32print.ClosePrinter(printer_handle)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # This allows you to run the monitor independently for testing.
     print(f"{Colors.BLUE}Available printers:{Colors.RESET}")
     printers = get_available_printers()
@@ -88,10 +97,16 @@ if __name__ == '__main__':
         print(f"{Colors.RED}No printers found. Exiting.{Colors.RESET}")
     else:
         try:
-            choice = int(input(f"\n{Colors.YELLOW}Select a printer to monitor (number): {Colors.RESET}"))
+            choice = int(
+                input(
+                    f"\n{Colors.YELLOW}Select a printer to monitor (number): {Colors.RESET}"
+                )
+            )
             chosen_printer = printers[choice]
 
-            print(f"\n--- Monitoring {Colors.GREEN}{chosen_printer}{Colors.RESET} --- (Press Ctrl+C to stop)")
+            print(
+                f"\n--- Monitoring {Colors.GREEN}{chosen_printer}{Colors.RESET} --- (Press Ctrl+C to stop)"
+            )
             for event in watch_printer_queue(chosen_printer):
                 print(f"{Colors.MAGENTA}[EVENT]{Colors.RESET} {event}")
         except (ValueError, IndexError):

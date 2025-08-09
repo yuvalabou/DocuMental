@@ -11,6 +11,7 @@ import json
 from const import LM_STUDIO_ENDPOINT, Colors
 from personality import SYSTEM_PROMPT
 
+
 def get_llm_response(event_string: str) -> str:
     """
     Generates a human-readable message from a printer event string.
@@ -35,7 +36,7 @@ def get_llm_response(event_string: str) -> str:
     # 2. Construct the prompt
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"Translate the following event: '{event_string}'"}
+        {"role": "user", "content": f"Translate the following event: '{event_string}'"},
     ]
     print(f"Constructed prompt: {json.dumps(messages, indent=2)}")
 
@@ -50,20 +51,20 @@ def get_llm_response(event_string: str) -> str:
                 "temperature": 0.7,
                 "stream": False,
             },
-            timeout=20
+            timeout=20,
         )
         response.raise_for_status()
         response_data = response.json()
         print(f"Received response: {json.dumps(response_data, indent=2)}")
 
         # 4. Extract the raw response content.
-        raw_content = response_data['choices'][0]['message']['content'].strip()
+        raw_content = response_data["choices"][0]["message"]["content"].strip()
 
         # 5. Defensively parse the response
         if '"' in raw_content:
             return raw_content.split('"')[1].strip()
-        if ':' in raw_content:
-            return raw_content.split(':')[-1].strip()
+        if ":" in raw_content:
+            return raw_content.split(":")[-1].strip()
 
         return raw_content
 
@@ -72,7 +73,8 @@ def get_llm_response(event_string: str) -> str:
     except (KeyError, IndexError) as e:
         return f"Error parsing response from LM Studio: {e}. Response: {response.text}"
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     TEST_EVENT = "Job ID 124: Status change to 'ERROR' - Paper Jam"
     print(f"Testing with event: '{TEST_EVENT}'")
     llm_message = get_llm_response(TEST_EVENT)

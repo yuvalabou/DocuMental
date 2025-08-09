@@ -7,6 +7,7 @@ printer is thinking.
 """
 
 import sys
+
 import pyttsx3
 from plyer import notification
 
@@ -16,6 +17,7 @@ try:
 except Exception as e:
     engine = None
     print(f"Could not initialize TTS engine: {e}")
+
 
 def notify_user(title: str, message: str):
     """
@@ -30,7 +32,7 @@ def notify_user(title: str, message: str):
             title=title,
             message=message,
             app_name="DocuMental",
-            timeout=10  # Notification will disappear after defined seconds
+            timeout=10,  # Notification will disappear after defined seconds
         )
         print(f"Desktop notification sent: '{title}'")
     except NotImplementedError:
@@ -39,6 +41,7 @@ def notify_user(title: str, message: str):
         # If plyer fails, just print to console.
         print(f"Error sending desktop notification: {e}")
         print(f"Title: {title}\nMessage: {message}")
+
 
 def speak_message(message: str):
     """
@@ -58,18 +61,19 @@ def speak_message(message: str):
     else:
         print("TTS engine not available.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # This allows you to test the communication module independently.
     print("--- Testing Communication Channels ---")
-    
+
     test_title = "Test Notification"
     test_message = "If you see this, the visual notification is working."
     print(f"\n1. Testing Desktop Notification...")
     notify_user(test_title, test_message)
-    
+
     spoken_message = "And if you can hear this, the audio is working."
     print(f"\n2. Testing Text-to-Speech...")
     speak_message(spoken_message)
-    
+
     print("\n--- Test Complete ---")
     sys.exit()

@@ -32,30 +32,41 @@ def printer_monitoring_worker(printer_name: str, event_queue: queue.Queue):
     finally:
         pythoncom.CoUninitialize()
 
+
 def main():
     """
     The main function of the DocuMental application.
     """
-    print(f"{Colors.BLUE}--- DocuMental: An Intelligent Printer Agent ---{Colors.RESET}")
+    print(
+        f"{Colors.BLUE}--- DocuMental: An Intelligent Printer Agent ---{Colors.RESET}"
+    )
 
     try:
         printers_to_monitor = get_available_printers()
         if not printers_to_monitor:
-            print(f"{Colors.RED}Error: No printers found on this system. Exiting.{Colors.RESET}")
+            print(
+                f"{Colors.RED}Error: No printers found on this system. Exiting.{Colors.RESET}"
+            )
             return
     except Exception as e:
         print(f"{Colors.RED}Error fetching printers: {e}{Colors.RESET}")
         return
 
     print(f"\n{Colors.GREEN}DocuMental is now running...{Colors.RESET}")
-    print(f"Monitoring all available printers: {Colors.CYAN}{', '.join(printers_to_monitor)}{Colors.RESET} (Press Ctrl+C to stop)")
+    print(
+        f"Monitoring all available printers: {Colors.CYAN}{', '.join(printers_to_monitor)}{Colors.RESET} (Press Ctrl+C to stop)"
+    )
     print("-" * 50)
 
     event_queue = queue.Queue()
     threads = []
 
     for printer_name in printers_to_monitor:
-        thread = threading.Thread(target=printer_monitoring_worker, args=(printer_name, event_queue), daemon=True)
+        thread = threading.Thread(
+            target=printer_monitoring_worker,
+            args=(printer_name, event_queue),
+            daemon=True,
+        )
         threads.append(thread)
         thread.start()
 
@@ -63,26 +74,29 @@ def main():
         while True:
             try:
                 printer_name, event = event_queue.get(timeout=1)
-                print(f"{Colors.MAGENTA}Detected Event on '{printer_name}':{Colors.RESET} {event}")
+                print(
+                    f"{Colors.MAGENTA}Detected Event on '{printer_name}':{Colors.RESET} {event}"
+                )
 
                 llm_message = get_llm_response(event)
 
                 if llm_message.startswith("Error:"):
                     print(f"{Colors.RED}{llm_message}{Colors.RESET}")
-                    continue # Skip to the next event
+                    continue  # Skip to the next event
 
-                print(f"{Colors.BLUE}LLM Response:{Colors.RESET} \"{llm_message}\" ")
+                print(f'{Colors.BLUE}LLM Response:{Colors.RESET} "{llm_message}" ')
 
                 # --- Dispatch Notifications ---
                 notify_user(f"Printer Alert: {printer_name}", llm_message)
                 speak_message(llm_message)
-                
+
                 print("-" * 50)
 
             except queue.Empty:
                 continue
     except KeyboardInterrupt:
         print(f"\n{Colors.YELLOW}Monitoring stopped by user. Goodbye!{Colors.RESET}")
+
 
 if __name__ == "__main__":
     main()

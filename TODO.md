@@ -2,6 +2,9 @@
 # DocuMental: TODO & Roadmap
 
 This document outlines potential improvements and future features for the DocuMental project.
+### Fixes
+
+- [ ] **Watchdog:** Watch instead of polling the print queue.
 
 ### Core Functionality Enhancements
 
@@ -21,14 +24,11 @@ This document outlines potential improvements and future features for the DocuMe
 
 ### Packaging & Distribution
 
-- [x] **Create a `pyproject.toml`:** Modernize the project structure to make it easily packageable and installable (`pip install .`).
+- [ ] **Create a `pyproject.toml`:** Modernize the project structure to make it easily packageable and installable (`pip install .`).
     - **Implementation:** Create a `pyproject.toml` file defining project metadata, dependencies, and an entry point that calls `prt_mind.main`.
 
 - [ ] **Publish to PyPI:** Package the project and upload it to the Python Package Index.
     - **Implementation:** Use `build` and `twine` to create and upload the distribution files.
-
-- [x] **Create a Standalone Executable:** For non-technical users, a single `.exe` file would be ideal.
-    - **Implementation:** Use `PyInstaller` or `cx_Freeze` to bundle the entire application into one executable file.
 
 ### Advanced Feature Ideas
 

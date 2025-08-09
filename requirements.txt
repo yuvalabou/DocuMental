@@ -2,3 +2,5 @@ requests
 plyer
 pywin32
 pyttsx3
+types-requests
+pywin32-stubs

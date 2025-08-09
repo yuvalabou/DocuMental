@@ -24,6 +24,7 @@ JOB_STATUS_MAP = {
     win32print.JOB_STATUS_USER_INTERVENTION: "User Intervention Needed",
 }
 
+
 # --- Color Constants (ANSI Escape Codes) ---
 class Colors:
     RESET = "\033[0m"
@@ -34,4 +35,7 @@ class Colors:
     MAGENTA = "\033[95m"
     CYAN = "\033[96m"
 
-PRE_DEFINED_PATTERNS: list[str] = ["netfabb",]
+
+PRE_DEFINED_PATTERNS: list[str] = [
+    "netfabb",
+]
