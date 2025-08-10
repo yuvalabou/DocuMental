@@ -1,17 +1,61 @@
 """
-# The Monitor Module: The Eyes and Ears (Debug Version)
+# The Monitor Module: The Eyes and Ears (ctypes Refactor)
 
-This script is the agent's connection to the physical world. It does one thing:
-it spies on the Windows printer queue, translates the cryptic machine language
-of status codes, and reports any activity—no matter how mundane—as a
-structured event. It is the source of all office gossip.
+This script is the agent's connection to the physical world. It uses the
+ctypes library to call Windows API functions directly, bypassing limitations
+in pywin32 to achieve an efficient, event-driven monitoring of the printer queue.
 """
 
-import time
+import ctypes
+from ctypes import wintypes
 
 import pywintypes
 import win32print
-from const import JOB_STATUS_MAP, Colors
+from const import Colors
+
+# --- ctypes Setup for Windows API Calls ---
+# Load necessary libraries
+winspool = ctypes.WinDLL("winspool.drv", use_last_error=True)
+kernel32 = ctypes.WinDLL("kernel32.dll", use_last_error=True)
+
+# --- Win32 Constants ---
+PRINTER_CHANGE_ADD_JOB = 0x00000100
+PRINTER_CHANGE_SET_JOB = 0x00000200
+PRINTER_CHANGE_DELETE_JOB = 0x00000400
+# Note: INVALID_HANDLE_VALUE is the integer value, not a ctypes object.
+INVALID_HANDLE_VALUE = -1
+INFINITE = 0xFFFFFFFF
+
+# --- ctypes Function Prototypes ---
+# Define the argument types and return types for the Win32 functions we need.
+winspool.OpenPrinterW.argtypes = [wintypes.LPWSTR, wintypes.LPHANDLE, wintypes.LPVOID]
+winspool.OpenPrinterW.restype = wintypes.BOOL
+
+winspool.ClosePrinter.argtypes = [wintypes.HANDLE]
+winspool.ClosePrinter.restype = wintypes.BOOL
+
+winspool.FindFirstPrinterChangeNotification.argtypes = [
+    wintypes.HANDLE,
+    wintypes.DWORD,
+    wintypes.DWORD,
+    wintypes.LPVOID,
+]
+# The return type is a handle, which ctypes treats as an integer.
+winspool.FindFirstPrinterChangeNotification.restype = wintypes.HANDLE
+
+winspool.FindNextPrinterChangeNotification.argtypes = [
+    wintypes.HANDLE,
+    ctypes.POINTER(wintypes.DWORD),
+    wintypes.LPVOID,
+    wintypes.LPVOID,
+]
+winspool.FindNextPrinterChangeNotification.restype = wintypes.BOOL
+
+winspool.FindClosePrinterChangeNotification.argtypes = [wintypes.HANDLE]
+winspool.FindClosePrinterChangeNotification.restype = wintypes.BOOL
+
+kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+kernel32.WaitForSingleObject.restype = wintypes.DWORD
 
 
 def get_available_printers() -> list:
@@ -19,75 +63,120 @@ def get_available_printers() -> list:
     try:
         printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL, None, 1)
         return [printer[2] for printer in printers]
-    except pywintypes.error as e:
-        print(f"{Colors.RED}Error enumerating printers: {e}{Colors.RESET}")
+    except Exception:
         return []
 
 
-def get_job_status_string(status_code):
+def get_job_status_string(status_code: int) -> str:
     """Converts a status code into a descriptive string."""
-    return JOB_STATUS_MAP.get(status_code, f"Unknown Status ({status_code})")
+    status_map = {
+        win32print.JOB_STATUS_PAUSED: "Paused",
+        win32print.JOB_STATUS_ERROR: "Error",
+        win32print.JOB_STATUS_DELETING: "Deleting",
+        win32print.JOB_STATUS_SPOOLING: "Spooling",
+        win32print.JOB_STATUS_PRINTING: "Printing",
+        win32print.JOB_STATUS_OFFLINE: "Offline",
+        win32print.JOB_STATUS_PAPEROUT: "Paper Out",
+        win32print.JOB_STATUS_PRINTED: "Printed",
+        win32print.JOB_STATUS_DELETED: "Deleted",
+        win32print.JOB_STATUS_BLOCKED_DEVQ: "Blocked",
+        win32print.JOB_STATUS_USER_INTERVENTION: "User Intervention",
+    }
+    for status, text in status_map.items():
+        if status_code & status:
+            return text
+    return f"Unknown Status ({status_code})"
 
 
 def watch_printer_queue(printer_name: str):
     """
-    Monitors a specified printer queue and yields event strings for any changes.
+    Monitors a printer queue using a ctypes bridge to the Win32 API.
     """
-    print(f"Attempting to open printer: {printer_name}")
+    change_handle = None
+    printer_handle = None
     try:
-        printer_handle = win32print.OpenPrinter(printer_name)
-    except pywintypes.error as e:
-        yield f"{Colors.RED}Fatal error opening printer '{printer_name}': {e}{Colors.RESET}"
-        return
+        # --- Open Printer Handle via ctypes ---
+        printer_handle = wintypes.HANDLE()
+        if not winspool.OpenPrinterW(printer_name, ctypes.byref(printer_handle), None):
+            raise ctypes.WinError(ctypes.get_last_error())
+        print(
+            f"{Colors.GREEN}Successfully opened printer {printer_name}.{Colors.RESET}"
+        )
 
-    print(
-        f"{Colors.GREEN}Successfully opened printer {printer_name}. Starting monitoring loop...{Colors.RESET}"
-    )
-    last_jobs: dict = {}
+        # --- Event-Driven Subscription via ctypes ---
+        flags = (
+            PRINTER_CHANGE_ADD_JOB | PRINTER_CHANGE_SET_JOB | PRINTER_CHANGE_DELETE_JOB
+        )
+        change_handle = winspool.FindFirstPrinterChangeNotification(
+            printer_handle, flags, 0, None
+        )
 
-    try:
+        if change_handle == INVALID_HANDLE_VALUE:
+            raise ctypes.WinError(ctypes.get_last_error())
+
+        print("Subscribed to printer change notifications. Waiting for events...")
+
+        # --- Initial State Snapshot ---
+        initial_jobs_info = win32print.EnumJobs(printer_handle.value, 0, -1, 2)
+        last_jobs = {job["JobId"]: job for job in initial_jobs_info}
+        print(f"Found {len(last_jobs)} existing jobs in the queue.")
+
+        # --- Main Monitoring Loop ---
         while True:
-            try:
-                print(f"{Colors.CYAN}Checking for jobs...{Colors.RESET}")
-                current_jobs_info = win32print.EnumJobs(printer_handle, 0, -1, 2)
+            kernel32.WaitForSingleObject(change_handle, INFINITE)
 
-                if not current_jobs_info:
-                    print(f"{Colors.YELLOW}No jobs found in queue.{Colors.RESET}")
-                else:
-                    print(
-                        f"{Colors.GREEN}Found {len(current_jobs_info)} job(s).{Colors.RESET}"
-                    )
+            pdw_change = wintypes.DWORD()
+            winspool.FindNextPrinterChangeNotification(
+                change_handle, ctypes.byref(pdw_change), None, None
+            )
+            # print(
+            #     f"{Colors.CYAN}Change detected on '{printer_name}'. Checking for jobs...{Colors.RESET}"
+            # )
 
-                current_jobs = {job["JobId"]: job for job in current_jobs_info}
+            current_jobs_info = win32print.EnumJobs(printer_handle.value, 0, -1, 2)
+            current_jobs = {job["JobId"]: job for job in current_jobs_info}
 
-                # Check for new jobs or status changes
-                for job_id, job in current_jobs.items():
-                    status_str = get_job_status_string(job["Status"])
-                    if job_id not in last_jobs:
-                        yield f"Job ID {job_id}: New job, '{job['pDocument']}' with status '{status_str}'"
-                    elif job["Status"] != last_jobs[job_id]["Status"]:
+            for job_id, job in current_jobs.items():
+                status_str = get_job_status_string(job["Status"])
+                if job_id not in last_jobs:
+                    yield f"Job ID {job_id}: New job, '{job['pDocument']}' with status '{status_str}'"
+                elif job["Status"] != last_jobs.get(job_id, {}).get("Status"):
+                    # --- Event Filtering Logic ---
+                    # To reduce noise, only report on a specific list of status changes.
+                    statuses_to_report = {
+                        win32print.JOB_STATUS_PAUSED,
+                        win32print.JOB_STATUS_ERROR,
+                        win32print.JOB_STATUS_OFFLINE,
+                        win32print.JOB_STATUS_PAPEROUT,
+                        win32print.JOB_STATUS_USER_INTERVENTION,
+                        win32print.JOB_STATUS_BLOCKED_DEVQ,
+                        win32print.JOB_STATUS_SPOOLING,
+                        win32print.JOB_STATUS_PRINTED,
+                    }
+                    # The job's status code is a bitmask. We check if any of the bits
+                    # we care about are set in the new status.
+                    if any(job["Status"] & status for status in statuses_to_report):
                         yield f"Job ID {job_id}: Status change to '{status_str}' for document '{job['pDocument']}'"
 
-                # Check for completed or deleted jobs
-                for job_id in list(last_jobs.keys()):
-                    if job_id not in current_jobs:
-                        yield f"Job ID {job_id}: Job '{last_jobs[job_id]['pDocument']}' completed or removed."
+            for job_id in list(last_jobs.keys()):
+                if job_id not in current_jobs:
+                    yield f"Job ID {job_id}: Job '{last_jobs[job_id]['pDocument']}' completed or removed."
 
-                last_jobs = current_jobs
+            last_jobs = current_jobs
 
-            except pywintypes.error as e:
-                yield f"{Colors.RED}Error during job enumeration: {e}. Retrying...{Colors.RESET}"
-            except Exception as e:
-                yield f"{Colors.RED}An unexpected error occurred in the monitoring loop: {e}{Colors.RESET}"
+    except Exception as e:
+        yield f"{Colors.RED}An error occurred in the monitor thread: {e}{Colors.RESET}"
 
-            time.sleep(5)
     finally:
-        print(f"Closing printer handle for {printer_name}")
-        win32print.ClosePrinter(printer_handle)
+        # --- Graceful Shutdown ---
+        print(f"Shutting down monitoring for {printer_name}.")
+        if change_handle and change_handle != INVALID_HANDLE_VALUE:
+            winspool.FindClosePrinterChangeNotification(change_handle)
+        if printer_handle and printer_handle.value:
+            winspool.ClosePrinter(printer_handle)
 
 
 if __name__ == "__main__":
-    # This allows you to run the monitor independently for testing.
     print(f"{Colors.BLUE}Available printers:{Colors.RESET}")
     printers = get_available_printers()
     for i, p_name in enumerate(printers):

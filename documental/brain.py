@@ -19,11 +19,11 @@ def get_llm_response(event_string: str) -> str:
     print(f"{Colors.CYAN}--- Brain Module Invoked ---{Colors.RESET}")
     # 1. Get the available model name from the server
     try:
-        print(f"Querying for models at: {LM_STUDIO_ENDPOINT}/models")
+        # print(f"Querying for models at: {LM_STUDIO_ENDPOINT}/models")
         model_response = requests.get(f"{LM_STUDIO_ENDPOINT}/models", timeout=10)
         model_response.raise_for_status()
         model_data = model_response.json()
-        print(f"Received model data: {json.dumps(model_data, indent=2)}")
+        # print(f"Received model data: {json.dumps(model_data, indent=2)}")
         model_name = model_data.get("data", [{}])[0].get("id")
         if not model_name:
             return "Error: Could not determine the model name from LM Studio."
@@ -38,7 +38,7 @@ def get_llm_response(event_string: str) -> str:
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": f"Translate the following event: '{event_string}'"},
     ]
-    print(f"Constructed prompt: {json.dumps(messages, indent=2)}")
+    # print(f"Constructed prompt: {json.dumps(messages, indent=2)}")
 
     # 3. Send the prompt to your LM Studio server.
     try:
@@ -55,7 +55,7 @@ def get_llm_response(event_string: str) -> str:
         )
         response.raise_for_status()
         response_data = response.json()
-        print(f"Received response: {json.dumps(response_data, indent=2)}")
+        # print(f"Received response: {json.dumps(response_data, indent=2)}")
 
         # 4. Extract the raw response content.
         raw_content = response_data["choices"][0]["message"]["content"].strip()
