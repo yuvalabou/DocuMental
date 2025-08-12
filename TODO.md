@@ -4,7 +4,7 @@
 This document outlines potential improvements and future features for the DocuMental project.
 ### Fixes
 
-- [ ] **Watchdog:** Watch instead of polling the print queue.
+- [X] **Watchdog:** Watch instead of polling the print queue.
 
 ### Core Functionality Enhancements
 
@@ -24,7 +24,7 @@ This document outlines potential improvements and future features for the DocuMe
 
 ### Packaging & Distribution
 
-- [ ] **Create a `pyproject.toml`:** Modernize the project structure to make it easily packageable and installable (`pip install .`).
+- [X] **Create a `pyproject.toml`:** Modernize the project structure to make it easily packageable and installable (`pip install .`).
     - **Implementation:** Create a `pyproject.toml` file defining project metadata, dependencies, and an entry point that calls `prt_mind.main`.
 
 - [ ] **Publish to PyPI:** Package the project and upload it to the Python Package Index.

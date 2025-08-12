@@ -31,7 +31,7 @@ Using a local LLM, this script watches your print queue, translates cryptic erro
 
 2. **Set up Your LLM Server:**
     * Install and run LM Studio or Ollama.
-    * Download a model (e.g., `ollama pull phi-3-mini`).
+    * Download a model (e.g., `ollama pull phi-3-mini`), Small one (2-4b) is recommended for speed.
     * Start the local server (in LM Studio, go to the "Local Server" tab; for Ollama, it runs automatically).
 
 3. **Configure the Agent (If Needed):**
@@ -41,11 +41,9 @@ Using a local LLM, this script watches your print queue, translates cryptic erro
 
 4. **Run the Agent:**
 
-    ```bash
-    python prt_mind.py
+    ```powershell
+    powershell ./run.ps1
     ```
-
-    The script will ask you to choose which printer to haunt. Once selected, it will run in the background.
 
 ## How It Works
 
