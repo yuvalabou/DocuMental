@@ -8,8 +8,8 @@ consults the local Large Language Model (LLM) to form a thought.
 
 import requests
 import json
-from const import LM_STUDIO_ENDPOINT, Colors
-from personality import SYSTEM_PROMPT
+from .const import LM_STUDIO_ENDPOINT, Colors
+from .personality import SYSTEM_PROMPT
 
 
 def get_llm_response(event_string: str) -> str:

@@ -10,10 +10,10 @@ import threading
 import time
 
 import pythoncom
-from brain import get_llm_response
-from communication import notify_user, speak_message
-from const import Colors
-from monitor import get_available_printers, watch_printer_queue
+from .brain import get_llm_response
+from .communication import notify_user, speak_message
+from .const import Colors
+from .monitor import get_available_printers, watch_printer_queue
 
 
 def printer_monitoring_worker(printer_name: str, event_queue: queue.Queue):

@@ -11,7 +11,7 @@ from ctypes import wintypes
 
 import pywintypes
 import win32print
-from const import Colors
+from .const import Colors
 
 # --- ctypes Setup for Windows API Calls ---
 # Load necessary libraries

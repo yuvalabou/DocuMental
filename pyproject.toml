@@ -25,3 +25,6 @@ dependencies = [
 
 [project.scripts]
 documental = "documental.prt_mind:main"
+
+[tool.setuptools]
+packages = ["documental"]
