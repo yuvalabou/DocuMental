@@ -10,6 +10,7 @@ import threading
 import time
 
 import pythoncom
+
 from .brain import get_llm_response
 from .communication import notify_user, speak_message
 from .const import Colors
@@ -34,9 +35,7 @@ def printer_monitoring_worker(printer_name: str, event_queue: queue.Queue):
 
 
 def main():
-    """
-    The main function of the DocuMental application.
-    """
+    """The main function of the DocuMental application."""
     print(
         f"{Colors.BLUE}--- DocuMental: An Intelligent Printer Agent ---{Colors.RESET}"
     )
