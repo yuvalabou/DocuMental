@@ -14,7 +14,7 @@ This document outlines potential improvements and future features for the DocuMe
 - [ ] **Advanced Job Interaction:** Allow the agent to take action on jobs based on the LLM's decision.
     - **Implementation:** Use the `win32print.SetJob` function to pause, resume, or cancel jobs. For example, the LLM could decide to pause a very large print job and ask the user for confirmation.
 
-- [ ] **Graceful LLM Connection Handling:** Implement a retry mechanism for connecting to the LLM server. If it fails after several attempts, assume the server is down and deliver a specific, pre-caned notification to the user.
+- [x] **Graceful LLM Connection Handling:** Implement a retry mechanism for connecting to the LLM server. If it fails after several attempts, assume the server is down and deliver a specific, pre-caned notification to the user.
 
 ### User Experience (UX) & Configuration
 
