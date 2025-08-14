@@ -137,12 +137,9 @@ def watch_printer_queue(printer_name: str):
             current_jobs = {job["JobId"]: job for job in current_jobs_info}
 
             for job_id, job in current_jobs.items():
-                status_str = get_job_status_string(job["Status"])
                 if job_id not in last_jobs:
-                    yield f"Job ID {job_id}: New job, '{job['pDocument']}' with status '{status_str}'"
+                    yield {"event": "new_job", "job_info": job}
                 elif job["Status"] != last_jobs.get(job_id, {}).get("Status"):
-                    # --- Event Filtering Logic ---
-                    # To reduce noise, only report on a specific list of status changes.
                     statuses_to_report = {
                         win32print.JOB_STATUS_PAUSED,
                         win32print.JOB_STATUS_ERROR,
@@ -153,14 +150,15 @@ def watch_printer_queue(printer_name: str):
                         win32print.JOB_STATUS_SPOOLING,
                         win32print.JOB_STATUS_PRINTED,
                     }
-                    # The job's status code is a bitmask. We check if any of the bits
-                    # we care about are set in the new status.
                     if any(job["Status"] & status for status in statuses_to_report):
-                        yield f"Job ID {job_id}: Status change to '{status_str}' for document '{job['pDocument']}'"
+                        yield {"event": "status_change", "job_info": job}
 
             for job_id in list(last_jobs.keys()):
                 if job_id not in current_jobs:
-                    yield f"Job ID {job_id}: Job '{last_jobs[job_id]['pDocument']}' completed or removed."
+                    yield {
+                        "event": "job_deleted",
+                        "job_info": last_jobs[job_id],
+                    }
 
             last_jobs = current_jobs
 
