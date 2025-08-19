@@ -1,4 +1,5 @@
-"""DocuMental: The Main Orchestrator of Printer Discontent
+"""
+DocuMental: The Main Orchestrator of Printer Discontent
 
 This is the main script that ties all the modules together. It awakens the
 agent, discovers all available printers, and runs an infinite loop to listen
@@ -12,9 +13,13 @@ import pythoncom
 
 from .brain import get_llm_response
 from .communication import notify_user, speak_message
-from .const import Colors, PRE_DEFINED_PATTERNS
-from .monitor import get_available_printers, watch_printer_queue, get_job_status_string
+from .const import PRE_DEFINED_PATTERNS, Colors
 from .memory import load_memory, update_and_get_context
+from .monitor import (
+    get_available_printers,
+    get_job_status_string,
+    watch_printer_queue
+    )
 
 
 def printer_monitoring_worker(printer_name: str, event_queue: queue.Queue):

@@ -1,5 +1,5 @@
 """
-# The Brain Module: The Seat of Consciousness (Debug Version)
+The Brain Module: The Seat of Consciousness
 
 This module is where the magic happens. It takes a dry, technical event string
 from the monitor, combines it with the printer's established personality, and
@@ -11,14 +11,8 @@ import time
 import requests
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
-from .const import LM_STUDIO_ENDPOINT, Colors
+from .const import LM_STUDIO_ENDPOINT, MAX_RETRIES, RETRY_DELAY, Colors
 from .personality import SYSTEM_PROMPT
-
-# --- Configuration ---
-# Maximum number of times to retry connecting to the LLM server.
-MAX_RETRIES = 3
-# Delay in seconds between retries.
-RETRY_DELAY = 1
 
 
 def get_llm_response(event_string: str) -> str:

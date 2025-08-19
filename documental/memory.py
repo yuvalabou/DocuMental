@@ -1,5 +1,5 @@
 """
-# The Memory Module: The Agent's Long-Term Grudge Holder
+The Memory Module: The Agent's Long-Term Grudge Holder
 
 This module provides the agent with a persistent memory, allowing it to
 recall past print jobs, user habits, and document histories. It reads from
@@ -10,13 +10,11 @@ generate more context-aware and personalized snark over time.
 import json
 import os
 from datetime import datetime
-from .const import Colors
+
+from .const import MEMORY_FILE_PATH, Colors
 
 # Define the absolute path to the memory file, ensuring it's always located
 # in the project root, regardless of where the script is run from.
-MEMORY_FILE_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "memory.json"
-)
 
 
 def load_memory() -> dict:

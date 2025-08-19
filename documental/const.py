@@ -1,5 +1,5 @@
 """
-# Constants and Configuration Module
+Constants and Configuration Module
 
 This file serves as a single source of truth for all technical configuration
 variables, static data, and constants used throughout the application.
@@ -18,6 +18,15 @@ import os
 CONFIG_FILE_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "config.json"
 )
+
+MEMORY_FILE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "memory.json"
+)
+
+# Maximum number of times to retry connecting to the LLM server.
+MAX_RETRIES = 3
+# Delay in seconds between retries.
+RETRY_DELAY = 1
 
 # A default endpoint is defined as a fallback in case the config file is missing or malformed.
 DEFAULT_ENDPOINT = "http://localhost:1234/v1"

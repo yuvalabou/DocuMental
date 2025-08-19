@@ -1,5 +1,5 @@
 """
-# The Communication Module: The Mouthpiece
+The Communication Module: The Mouthpiece
 
 This module is the agent's voice. It provides distinct channels for visual
 and auditory notifications, allowing the user to see and/or hear what the

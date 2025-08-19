@@ -1,5 +1,5 @@
 """
-# The Monitor Module: The Eyes and Ears (ctypes Refactor)
+The Monitor Module: The Eyes and Ears
 
 This script is the agent's connection to the physical world. It uses the
 ctypes library to call Windows API functions directly, bypassing limitations
@@ -11,6 +11,7 @@ from ctypes import wintypes
 
 import pywintypes
 import win32print
+
 from .const import Colors
 
 # --- ctypes Setup for Windows API Calls ---
