@@ -13,8 +13,9 @@ import pythoncom
 
 from .brain import get_llm_response
 from .communication import notify_user, speak_message
-from .const import Colors
+from .const import Colors, PRE_DEFINED_PATTERNS
 from .monitor import get_available_printers, watch_printer_queue, get_job_status_string
+from .memory import load_memory, update_and_get_context
 
 
 def printer_monitoring_worker(printer_name: str, event_queue: queue.Queue):
@@ -39,7 +40,7 @@ def printer_monitoring_worker(printer_name: str, event_queue: queue.Queue):
         pythoncom.CoUninitialize()
 
 
-def format_event_for_llm(event_data: dict) -> str:
+def format_event_for_llm(event_data: dict, memory_context: str) -> str:
     """Formats the job event data into a detailed string for the LLM."""
     event_type = event_data.get("event", "unknown_event")
     job_info = event_data.get("job_info", {})
@@ -59,27 +60,41 @@ def format_event_for_llm(event_data: dict) -> str:
     else:
         submitted_str = "N/A"
 
-    # Construct a detailed, human-readable string
+    # Detect keywords in the document name
+    detected_keywords = [p for p in PRE_DEFINED_PATTERNS if p.lower() in doc_name.lower()]
+    keyword_str = f"Detected keywords in document name: {', '.join(detected_keywords)}." if detected_keywords else ""
+
+    # Construct a detailed, human-readable string for the event
+    base_event_str = ""
     if event_type == "new_job":
-        return (
+        base_event_str = (
             f"A new print job was submitted: "
             f"Document='{doc_name}', User='{user_name}', JobID={job_id}, "
             f"Pages={total_pages}, Size={size_kb} KB, Submitted='{submitted_str}', "
             f"InitialStatus='{status_str}'."
         )
     elif event_type == "status_change":
-        return (
+        base_event_str = (
             f"The status of a print job changed: "
             f"Document='{doc_name}', User='{user_name}', JobID={job_id}, "
             f"NewStatus='{status_str}', Pages={total_pages}, Size={size_kb} KB."
         )
     elif event_type == "job_deleted":
-        return (
+        base_event_str = (
             f"A print job was completed or removed: "
             f"Document='{doc_name}', User='{user_name}', JobID={job_id}."
         )
     else:
-        return f"An unknown event occurred: {event_data}"
+        base_event_str = f"An unknown event occurred: {event_data}"
+
+    # Combine the base event, historical context, and keywords for the final prompt
+    full_context = [base_event_str]
+    if memory_context:
+        full_context.append(f"Historical context: {memory_context}")
+    if keyword_str:
+        full_context.append(keyword_str)
+
+    return " ".join(full_context)
 
 
 def main():
@@ -102,6 +117,9 @@ def main():
         f"Monitoring all available printers: {Colors.CYAN}{', '.join(printers_to_monitor)}{Colors.RESET} (Press Ctrl+C to stop)"
     )
     print("-" * 50)
+
+    # Load the persistent memory at startup
+    memory_data = load_memory()
 
     event_queue = queue.Queue()
     threads = []
@@ -132,8 +150,12 @@ def main():
                     f"{event_data.get('event')} for doc '{event_data.get('job_info', {}).get('pDocument', 'N/A')}'"
                 )
 
+                # Update memory with the current job and get historical context
+                job_info = event_data.get("job_info", {})
+                memory_context, memory_data = update_and_get_context(job_info, memory_data)
+
                 # Format the rich event data into a string for the LLM
-                event_string_for_llm = format_event_for_llm(event_data)
+                event_string_for_llm = format_event_for_llm(event_data, memory_context)
 
                 llm_message = get_llm_response(event_string_for_llm)
 
