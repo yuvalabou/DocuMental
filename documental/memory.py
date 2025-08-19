@@ -11,10 +11,14 @@ import json
 import os
 from datetime import datetime
 
-from .const import MEMORY_FILE_PATH, Colors
+from .const import Colors
+from .utils import ordinal
 
 # Define the absolute path to the memory file, ensuring it's always located
 # in the project root, regardless of where the script is run from.
+MEMORY_FILE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "memory.json"
+)
 
 
 def load_memory() -> dict:
@@ -29,7 +33,12 @@ def load_memory() -> dict:
     """
     # If the memory file doesn't exist, return a default, empty structure.
     if not os.path.exists(MEMORY_FILE_PATH):
-        return {"users": {}, "documents": {}}
+        print(f"{Colors.YELLOW}Memory file not found. Creating a new one at {MEMORY_FILE_PATH}.{Colors.RESET}")
+        # Create a default, empty structure
+        default_memory = {"users": {}, "documents": {}}
+        # Save the new memory file
+        save_memory(default_memory)
+        return default_memory
     try:
         with open(MEMORY_FILE_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -61,18 +70,7 @@ def save_memory(data: dict):
         )
 
 
-def ordinal(n: int) -> str:
-    """
-    Converts an integer into its ordinal representation (e.g., 1 -> "1st", 2 -> "2nd").
-    This is a utility function to make the historical context more human-readable.
-    """
-    # Handles the special cases for 11th, 12th, 13th
-    if 11 <= (n % 100) <= 13:
-        suffix = "th"
-    else:
-        # Handles all other cases (1st, 2nd, 3rd, 4th, etc.)
-        suffix = ["th", "st", "nd", "rd", "th"][min(n % 10, 4)]
-    return str(n) + suffix
+
 
 
 def update_and_get_context(job_info: dict, memory: dict) -> tuple[str, dict]:

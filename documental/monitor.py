@@ -13,6 +13,7 @@ import pywintypes
 import win32print
 
 from .const import Colors
+from .utils import get_available_printers, get_job_status_string
 
 # --- ctypes Setup for Windows API Calls ---
 # Load necessary libraries
@@ -59,40 +60,8 @@ kernel32.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
 kernel32.WaitForSingleObject.restype = wintypes.DWORD
 
 
-def get_available_printers() -> list:
-    """Returns a list of all installed printer names."""
-    try:
-        printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL, None, 1)
-        return [printer[2] for printer in printers]
-    except Exception:
-        return []
-
-
-def get_job_status_string(status_code: int) -> str:
-    """Converts a status code into a descriptive string."""
-    status_map = {
-        win32print.JOB_STATUS_PAUSED: "Paused",
-        win32print.JOB_STATUS_ERROR: "Error",
-        win32print.JOB_STATUS_DELETING: "Deleting",
-        win32print.JOB_STATUS_SPOOLING: "Spooling",
-        win32print.JOB_STATUS_PRINTING: "Printing",
-        win32print.JOB_STATUS_OFFLINE: "Offline",
-        win32print.JOB_STATUS_PAPEROUT: "Paper Out",
-        win32print.JOB_STATUS_PRINTED: "Printed",
-        win32print.JOB_STATUS_DELETED: "Deleted",
-        win32print.JOB_STATUS_BLOCKED_DEVQ: "Blocked",
-        win32print.JOB_STATUS_USER_INTERVENTION: "User Intervention",
-    }
-    for status, text in status_map.items():
-        if status_code & status:
-            return text
-    return f"Unknown Status ({status_code})"
-
-
 def watch_printer_queue(printer_name: str):
-    """
-    Monitors a printer queue using a ctypes bridge to the Win32 API.
-    """
+    """Monitors a printer queue using a ctypes bridge to the Win32 API."""
     change_handle = None
     printer_handle = None
     try:

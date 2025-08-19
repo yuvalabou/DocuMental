@@ -11,8 +11,18 @@ import time
 import requests
 from requests.exceptions import ConnectionError, HTTPError, Timeout
 
-from .const import LM_STUDIO_ENDPOINT, MAX_RETRIES, RETRY_DELAY, Colors
+from .const import DEFAULT_ENDPOINT, MAX_RETRIES, RETRY_DELAY, Colors
 from .personality import SYSTEM_PROMPT
+
+from .utils import load_or_create_config
+
+config = load_or_create_config()  # Load the configuration file.
+
+
+# Safely get the endpoint from the nested JSON structure.
+LM_STUDIO_ENDPOINT = config.get("llm", {}).get(
+    "lm_studio_endpoint", DEFAULT_ENDPOINT
+)
 
 
 def get_llm_response(event_string: str) -> str:
