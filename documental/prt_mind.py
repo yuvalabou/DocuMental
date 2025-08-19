@@ -7,7 +7,6 @@ for events, consult the brain, and broadcast the resulting snark to the user.
 
 import queue
 import threading
-import time
 
 import pythoncom
 
@@ -61,8 +60,14 @@ def format_event_for_llm(event_data: dict, memory_context: str) -> str:
         submitted_str = "N/A"
 
     # Detect keywords in the document name
-    detected_keywords = [p for p in PRE_DEFINED_PATTERNS if p.lower() in doc_name.lower()]
-    keyword_str = f"Detected keywords in document name: {', '.join(detected_keywords)}." if detected_keywords else ""
+    detected_keywords = [
+        p for p in PRE_DEFINED_PATTERNS if p.lower() in doc_name.lower()
+    ]
+    keyword_str = (
+        f"Detected keywords in document name: {', '.join(detected_keywords)}."
+        if detected_keywords
+        else ""
+    )
 
     # Construct a detailed, human-readable string for the event
     base_event_str = ""
@@ -99,7 +104,9 @@ def format_event_for_llm(event_data: dict, memory_context: str) -> str:
 
 def main():
     """The main function of the DocuMental application."""
-    print(f"{Colors.BLUE}--- DocuMental: An Intelligent Printer Agent ---{Colors.RESET}")
+    print(
+        f"{Colors.BLUE}--- DocuMental: An Intelligent Printer Agent ---{Colors.RESET}"
+    )
 
     try:
         printers_to_monitor = get_available_printers()
@@ -152,7 +159,9 @@ def main():
 
                 # Update memory with the current job and get historical context
                 job_info = event_data.get("job_info", {})
-                memory_context, memory_data = update_and_get_context(job_info, memory_data)
+                memory_context, memory_data = update_and_get_context(
+                    job_info, memory_data
+                )
 
                 # Format the rich event data into a string for the LLM
                 event_string_for_llm = format_event_for_llm(event_data, memory_context)
@@ -170,7 +179,6 @@ def main():
                 speak_message(llm_message)
 
                 print("-" * 50)
-
 
             except queue.Empty:
                 continue

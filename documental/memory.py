@@ -14,7 +14,9 @@ from .const import Colors
 
 # Define the absolute path to the memory file, ensuring it's always located
 # in the project root, regardless of where the script is run from.
-MEMORY_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "memory.json")
+MEMORY_FILE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "memory.json"
+)
 
 
 def load_memory() -> dict:
@@ -31,11 +33,13 @@ def load_memory() -> dict:
     if not os.path.exists(MEMORY_FILE_PATH):
         return {"users": {}, "documents": {}}
     try:
-        with open(MEMORY_FILE_PATH, "r") as f:
+        with open(MEMORY_FILE_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, IOError) as e:
         # If the file is unreadable or not valid JSON, print a warning and start fresh.
-        print(f"{Colors.YELLOW}Warning: Could not read or parse memory.json. Starting with a fresh memory. Error: {e}{Colors.RESET}")
+        print(
+            f"{Colors.YELLOW}Warning: Could not read or parse memory.json. Starting with a fresh memory. Error: {e}{Colors.RESET}"
+        )
         return {"users": {}, "documents": {}}
 
 
@@ -50,11 +54,13 @@ def save_memory(data: dict):
         data: The dictionary containing the memory data to be saved.
     """
     try:
-        with open(MEMORY_FILE_PATH, "w") as f:
+        with open(MEMORY_FILE_PATH, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
     except IOError as e:
         # If the file cannot be written to (e.g., due to permissions), print an error.
-        print(f"{Colors.RED}Error: Could not write to memory.json. Error: {e}{Colors.RESET}")
+        print(
+            f"{Colors.RED}Error: Could not write to memory.json. Error: {e}{Colors.RESET}"
+        )
 
 
 def ordinal(n: int) -> str:
@@ -100,7 +106,9 @@ def update_and_get_context(job_info: dict, memory: dict) -> tuple[str, dict]:
         user_memory["last_print_timestamp"] = datetime.now().isoformat()
         memory["users"][user_name] = user_memory
         # Add a human-readable string to the context.
-        context_parts.append(f"This is the {ordinal(user_memory['print_count'])} time '{user_name}' has printed.")
+        context_parts.append(
+            f"This is the {ordinal(user_memory['print_count'])} time '{user_name}' has printed."
+        )
 
     # Update document-specific memory
     if doc_name != "N/A":
@@ -111,7 +119,9 @@ def update_and_get_context(job_info: dict, memory: dict) -> tuple[str, dict]:
         memory["documents"][doc_name] = doc_memory
         # Only add context if the document has been seen before to avoid redundancy.
         if doc_memory["print_count"] > 1:
-            context_parts.append(f"The document '{doc_name}' has been printed {doc_memory['print_count']} times before.")
+            context_parts.append(
+                f"The document '{doc_name}' has been printed {doc_memory['print_count']} times before."
+            )
 
     # After updating the memory dictionary in place, save it back to the file.
     save_memory(memory)

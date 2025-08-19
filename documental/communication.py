@@ -22,7 +22,7 @@ try:
 except Exception as e:
     # If initialization fails, set the engine to None and print a warning.
     # The speak_message function will check for this and avoid trying to use the engine.
-    engine = None
+    ENGINE = None
     print(f"Could not initialize TTS engine: {e}")
 
 
@@ -54,8 +54,7 @@ def notify_user(title: str, message: str):
         # Fallback for any other unexpected errors from the plyer library.
         # We print the notification to the console so the message is not lost.
         print(f"Error sending desktop notification: {e}")
-        print(f"Title: {title}
-Message: {message}")
+        print(f"Title: {title} Message: {message}")
 
 
 def speak_message(message: str):
@@ -91,20 +90,17 @@ if __name__ == "__main__":
     print("--- Testing Communication Channels ---")
 
     # Test the desktop notification.
-    test_title = "Test Notification"
-    test_message = "If you see this, the visual notification is working."
-    print(f"
-1. Testing Desktop Notification...")
-    notify_user(test_title, test_message)
+    TEST_TITLE = "Test Notification"
+    TEST_MESSAGE = "If you see this, the visual notification is working."
+    print("1. Testing Desktop Notification...")
+    notify_user(TEST_TITLE, TEST_MESSAGE)
 
     # Test the text-to-speech output.
-    spoken_message = "And if you can hear this, the audio is working."
-    print(f"
-2. Testing Text-to-Speech...")
-    speak_message(spoken_message)
+    SOPKEN_MESSAGE = "And if you can hear this, the audio is working."
+    print("2. Testing Text-to-Speech...")
+    speak_message(SOPKEN_MESSAGE)
 
-    print("
---- Test Complete ---")
+    print("--- Test Complete ---")
     # sys.exit() is called to ensure the script terminates cleanly, especially
     # if the TTS engine has background threads.
     sys.exit()

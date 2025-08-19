@@ -15,18 +15,24 @@ import os
 
 # Construct the absolute path to `config.json`.
 # It's expected to be in the project's root directory, one level above this file's directory.
-CONFIG_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config.json")
+CONFIG_FILE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "config.json"
+)
 
 # A default endpoint is defined as a fallback in case the config file is missing or malformed.
 DEFAULT_ENDPOINT = "http://localhost:1234/v1"
 
 try:
-    with open(CONFIG_FILE_PATH, "r") as f:
+    with open(CONFIG_FILE_PATH, "r", encoding="utf-8") as f:
         config = json.load(f)
     # Safely get the endpoint from the nested JSON structure.
-    LM_STUDIO_ENDPOINT = config.get("llm", {}).get("lm_studio_endpoint", DEFAULT_ENDPOINT)
+    LM_STUDIO_ENDPOINT = config.get("llm", {}).get(
+        "lm_studio_endpoint", DEFAULT_ENDPOINT
+    )
 except (FileNotFoundError, json.JSONDecodeError) as e:
-    print(f"Warning: Could not load or parse {CONFIG_FILE_PATH}. Using default endpoint. Error: {e}")
+    print(
+        f"Warning: Could not load or parse {CONFIG_FILE_PATH}. Using default endpoint. Error: {e}"
+    )
     LM_STUDIO_ENDPOINT = DEFAULT_ENDPOINT
 
 
@@ -49,6 +55,15 @@ class Colors:
 # this information is passed to the LLM to generate a more specific and context-aware response.
 # For example, seeing the word "resume" might prompt a snarky comment about job hunting.
 PRE_DEFINED_PATTERNS: list[str] = [
-    "netfabb", "resume", "confidential", "secret", "private",
-    "invoice", "recipe", "vacation", "plans", "report", "draft"
+    "netfabb",
+    "resume",
+    "confidential",
+    "secret",
+    "private",
+    "invoice",
+    "recipe",
+    "vacation",
+    "plans",
+    "report",
+    "draft",
 ]

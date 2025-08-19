@@ -6,10 +6,11 @@ from the monitor, combines it with the printer's established personality, and
 consults the local Large Language Model (LLM) to form a thought.
 """
 
-import requests
-import json
 import time
+
+import requests
 from requests.exceptions import ConnectionError, HTTPError, Timeout
+
 from .const import LM_STUDIO_ENDPOINT, Colors
 from .personality import SYSTEM_PROMPT
 
@@ -46,7 +47,9 @@ def get_llm_response(event_string: str) -> str:
     model_name = None
     for attempt in range(MAX_RETRIES):
         try:
-            print(f"Attempt {attempt + 1}/{MAX_RETRIES}: Querying for models at: {LM_STUDIO_ENDPOINT}/models")
+            print(
+                f"Attempt {attempt + 1}/{MAX_RETRIES}: Querying for models at: {LM_STUDIO_ENDPOINT}/models"
+            )
             # Request the list of available models from the server.
             model_response = requests.get(f"{LM_STUDIO_ENDPOINT}/models", timeout=10)
             model_response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx).
@@ -70,7 +73,9 @@ def get_llm_response(event_string: str) -> str:
             # This handles cases where the JSON response is not in the expected format.
             error_message = f"Error parsing model list from LLM server: {e}. Response: {model_response.text if 'model_response' in locals() else 'No response'}"
         except requests.exceptions.RequestException as e:
-            error_message = f"An unexpected error occurred connecting to LLM server: {e}"
+            error_message = (
+                f"An unexpected error occurred connecting to LLM server: {e}"
+            )
 
         # If an error occurred, print it and decide whether to retry.
         print(f"{Colors.RED}{error_message}{Colors.RESET}")
@@ -95,7 +100,9 @@ def get_llm_response(event_string: str) -> str:
     # --- Step 3: Send the prompt to the LLM server with retries ---
     for attempt in range(MAX_RETRIES):
         try:
-            print(f"Attempt {attempt + 1}/{MAX_RETRIES}: Sending request to chat completions endpoint...")
+            print(
+                f"Attempt {attempt + 1}/{MAX_RETRIES}: Sending request to chat completions endpoint..."
+            )
             # Post the request to the chat completions endpoint.
             response = requests.post(
                 f"{LM_STUDIO_ENDPOINT}/chat/completions",
@@ -103,7 +110,7 @@ def get_llm_response(event_string: str) -> str:
                     "model": model_name,
                     "messages": messages,
                     "temperature": 0.7,  # Controls the creativity of the response.
-                    "stream": False,     # We want the full response at once, not a stream.
+                    "stream": False,  # We want the full response at once, not a stream.
                 },
                 timeout=20,  # A longer timeout for the generation itself.
             )
@@ -134,7 +141,9 @@ def get_llm_response(event_string: str) -> str:
             # Handles unexpected JSON structure from the server.
             error_message = f"Error parsing response from LLM server: {e}. Response: {response.text if 'response' in locals() else 'No response'}"
         except requests.exceptions.RequestException as e:
-            error_message = f"An unexpected error occurred communicating with LLM server: {e}"
+            error_message = (
+                f"An unexpected error occurred communicating with LLM server: {e}"
+            )
 
         # Print the error and decide whether to retry.
         print(f"{Colors.RED}{error_message}{Colors.RESET}")
