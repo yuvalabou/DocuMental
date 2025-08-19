@@ -13,13 +13,10 @@ from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from .const import DEFAULT_ENDPOINT, MAX_RETRIES, RETRY_DELAY, Colors
 from .personality import SYSTEM_PROMPT
-
 from .utils import load_or_create_config
 
-config = load_or_create_config()  # Load the configuration file.
-
-
-# Safely get the endpoint from the nested JSON structure.
+# Load configuration to get the endpoint.
+config = load_or_create_config()
 LM_STUDIO_ENDPOINT = config.get("llm", {}).get(
     "lm_studio_endpoint", DEFAULT_ENDPOINT
 )
@@ -98,7 +95,7 @@ def get_llm_response(event_string: str) -> str:
     # The prompt consists of a system message (defining the personality) and a user message (the event).
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"Translate the following event: '{event_string}'"},
+        {"role": "user", "content": event_string},
     ]
 
     # --- Step 3: Send the prompt to the LLM server with retries ---

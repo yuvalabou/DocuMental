@@ -16,9 +16,7 @@ from .utils import ordinal
 
 # Define the absolute path to the memory file, ensuring it's always located
 # in the project root, regardless of where the script is run from.
-MEMORY_FILE_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "memory.json"
-)
+MEMORY_FILE_PATH = os.path.join(os.getcwd(), "memory.json")
 
 
 def load_memory() -> dict:
@@ -31,19 +29,17 @@ def load_memory() -> dict:
     Returns:
         A dictionary representing the agent's memory, typically with keys like "users" and "documents".
     """
-    # If the memory file doesn't exist, return a default, empty structure.
     if not os.path.exists(MEMORY_FILE_PATH):
-        print(f"{Colors.YELLOW}Memory file not found. Creating a new one at {MEMORY_FILE_PATH}.{Colors.RESET}")
-        # Create a default, empty structure
+        print(
+            f"{Colors.YELLOW}Memory file not found. Creating a new one at {MEMORY_FILE_PATH}.{Colors.RESET}"
+        )
         default_memory = {"users": {}, "documents": {}}
-        # Save the new memory file
         save_memory(default_memory)
         return default_memory
     try:
         with open(MEMORY_FILE_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, IOError) as e:
-        # If the file is unreadable or not valid JSON, print a warning and start fresh.
         print(
             f"{Colors.YELLOW}Warning: Could not read or parse memory.json. Starting with a fresh memory. Error: {e}{Colors.RESET}"
         )
@@ -60,17 +56,18 @@ def save_memory(data: dict):
     Args:
         data: The dictionary containing the memory data to be saved.
     """
+    print(f"{Colors.YELLOW}--- Attempting to save memory ---")
+    print(f"Target file path: {MEMORY_FILE_PATH}")
+    print(f"Data to save: {data}")
     try:
         with open(MEMORY_FILE_PATH, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
+        print(f"{Colors.GREEN}--- Memory saved successfully ---")
     except IOError as e:
-        # If the file cannot be written to (e.g., due to permissions), print an error.
-        print(
-            f"{Colors.RED}Error: Could not write to memory.json. Error: {e}{Colors.RESET}"
-        )
-
-
-
+        print(f"--- CRITICAL: FAILED TO SAVE MEMORY ---")
+        print(f"Error: Could not write to memory.json. Error: {e}")
+        print(f"Please check file permissions for the directory: {os.path.dirname(MEMORY_FILE_PATH)}")
+        print(f"--- END OF ERROR ---")
 
 
 def update_and_get_context(job_info: dict, memory: dict) -> tuple[str, dict]:
@@ -94,33 +91,59 @@ def update_and_get_context(job_info: dict, memory: dict) -> tuple[str, dict]:
     doc_name = job_info.get("pDocument", "N/A")
     context_parts = []
 
-    # Update user-specific memory
     if user_name != "N/A":
-        # Get the existing user memory or create a new entry if it's their first time.
         user_memory = memory["users"].get(user_name, {"print_count": 0})
         user_memory["print_count"] += 1
         user_memory["last_print_timestamp"] = datetime.now().isoformat()
         memory["users"][user_name] = user_memory
-        # Add a human-readable string to the context.
         context_parts.append(
             f"This is the {ordinal(user_memory['print_count'])} time '{user_name}' has printed."
         )
 
-    # Update document-specific memory
     if doc_name != "N/A":
-        # Get existing document memory or create a new one.
         doc_memory = memory["documents"].get(doc_name, {"print_count": 0})
         doc_memory["print_count"] += 1
         doc_memory["last_print_timestamp"] = datetime.now().isoformat()
         memory["documents"][doc_name] = doc_memory
-        # Only add context if the document has been seen before to avoid redundancy.
         if doc_memory["print_count"] > 1:
             context_parts.append(
                 f"The document '{doc_name}' has been printed {doc_memory['print_count']} times before."
             )
 
-    # After updating the memory dictionary in place, save it back to the file.
     save_memory(memory)
 
-    # Join the context parts into a single string and return it with the updated memory.
     return " ".join(context_parts), memory
+
+
+def get_context_without_updating(job_info: dict, memory: dict) -> str:
+    """
+    Generates a historical context string without modifying the memory.
+
+    This is a read-only operation used for events like status changes, where we
+    want to provide context to the LLM without incrementing print counts.
+
+    Args:
+        job_info: A dictionary containing details about the current print job.
+        memory: The current memory data dictionary.
+
+    Returns:
+        A string with the historical context.
+    """
+    user_name = job_info.get("pUserName", "N/A")
+    doc_name = job_info.get("pDocument", "N/A")
+    context_parts = []
+
+    if user_name != "N/A" and user_name in memory["users"]:
+        user_memory = memory["users"][user_name]
+        context_parts.append(
+            f"This is the {ordinal(user_memory['print_count'])} time '{user_name}' has printed."
+        )
+
+    if doc_name != "N/A" and doc_name in memory["documents"]:
+        doc_memory = memory["documents"][doc_name]
+        if doc_memory["print_count"] > 0:
+            context_parts.append(
+                f"The document '{doc_name}' has been printed {doc_memory['print_count']} times before."
+            )
+
+    return " ".join(context_parts)

@@ -10,16 +10,14 @@ import queue
 import threading
 
 import pythoncom
+import win32print
 
 from .brain import get_llm_response
 from .communication import notify_user, speak_message
 from .const import PRE_DEFINED_PATTERNS, Colors
-from .memory import load_memory, update_and_get_context
-from .monitor import (
-    get_available_printers,
-    get_job_status_string,
-    watch_printer_queue
-    )
+from .memory import get_context_without_updating, load_memory, update_and_get_context
+from .monitor import watch_printer_queue
+from .utils import get_available_printers, get_job_status_string
 
 
 def printer_monitoring_worker(printer_name: str, event_queue: queue.Queue):
@@ -133,6 +131,18 @@ def main():
     # Load the persistent memory at startup
     memory_data = load_memory()
 
+    # --- State Tracking for Notification Debouncing ---
+    # A set to keep track of job IDs that have already been processed.
+    processed_jobs = set()
+    # A set of statuses that are important enough to warrant a notification even
+    # if we have already notified about the job once.
+    HIGH_PRIORITY_STATUSES = {
+        win32print.JOB_STATUS_ERROR,
+        win32print.JOB_STATUS_PAPEROUT,
+        win32print.JOB_STATUS_USER_INTERVENTION,
+        win32print.JOB_STATUS_BLOCKED_DEVQ,
+    }
+
     event_queue = queue.Queue()
     threads = []
 
@@ -150,26 +160,48 @@ def main():
             try:
                 printer_name, event_data = event_queue.get(timeout=1)
 
-                # Ensure event_data is a dictionary before processing
                 if not isinstance(event_data, dict):
                     print(
                         f"{Colors.YELLOW}Received non-dict event: {event_data}{Colors.RESET}"
                     )
                     continue
 
+                job_info = event_data.get("job_info", {})
+                job_id = job_info.get("JobId")
+                status_code = job_info.get("Status", 0)
+
+                # --- Smart Notification Logic ---
+                # Decide whether to process the event or ignore it to prevent spam.
+                if job_id in processed_jobs:
+                    # If we've seen this job, only notify for high-priority events.
+                    is_high_priority = any(
+                        status_code & status for status in HIGH_PRIORITY_STATUSES
+                    )
+                    if not is_high_priority:
+                        continue  # Skip low-priority updates for already-seen jobs
+                else:
+                    # If it's a new job, mark it as processed.
+                    processed_jobs.add(job_id)
+
                 print(
                     f"{Colors.MAGENTA}Detected Event on '{printer_name}':{Colors.RESET} "
-                    f"{event_data.get('event')} for doc '{event_data.get('job_info', {}).get('pDocument', 'N/A')}'"
+                    f"{event_data.get('event')} for doc '{job_info.get('pDocument', 'N/A')}'"
                 )
 
-                # Update memory with the current job and get historical context
-                job_info = event_data.get("job_info", {})
-                memory_context, memory_data = update_and_get_context(
-                    job_info, memory_data
-                )
+                # Update memory only for new jobs to avoid duplicate counting.
+                event_type = event_data.get("event")
+                memory_context = ""
+                if event_type == "new_job":
+                    memory_context, memory_data = update_and_get_context(
+                        job_info, memory_data
+                    )
+                else:
+                    memory_context = get_context_without_updating(job_info, memory_data)
 
                 # Format the rich event data into a string for the LLM
                 event_string_for_llm = format_event_for_llm(event_data, memory_context)
+
+                # print(f"{Colors.YELLOW}--- Sending to LLM: ---\n{event_string_for_llm}{Colors.RESET}")
 
                 llm_message = get_llm_response(event_string_for_llm)
 

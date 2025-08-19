@@ -15,9 +15,7 @@ from .const import DEFAULT_ENDPOINT, Colors
 
 # It's better to define the path to the config file here, as this is the module
 # responsible for reading and creating it.
-CONFIG_FILE_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "config.json"
-)
+CONFIG_FILE_PATH = os.path.join(os.getcwd(), "config.json")
 
 
 def load_or_create_config() -> dict:
