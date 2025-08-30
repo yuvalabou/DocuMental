@@ -17,11 +17,8 @@ from plyer import notification
 # By creating a single instance, we can reuse it for all subsequent speech requests.
 # A try-except block handles cases where a TTS engine might not be available on the system.
 try:
-    # pyttsx3.init() discovers and initializes the best available TTS driver on the host OS.
     engine = pyttsx3.init()
 except Exception as e:
-    # If initialization fails, set the engine to None and print a warning.
-    # The speak_message function will check for this and avoid trying to use the engine.
     ENGINE = None
     print(f"Could not initialize TTS engine: {e}")
 
@@ -40,7 +37,6 @@ def notify_user(title: str, message: str):
     """
     try:
         notification.notify(
-            title=title,
             message=message,
             app_name="DocuMental",
             # The notification will automatically disappear after this many seconds.

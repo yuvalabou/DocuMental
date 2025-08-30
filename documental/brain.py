@@ -17,6 +17,7 @@ from .utils import load_or_create_config
 
 # Load configuration to get the endpoint.
 config = load_or_create_config()
+
 LM_STUDIO_ENDPOINT = config.get("llm", {}).get(
     "lm_studio_endpoint", DEFAULT_ENDPOINT
 )

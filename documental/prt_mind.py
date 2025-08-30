@@ -15,7 +15,11 @@ import win32print
 from .brain import get_llm_response
 from .communication import notify_user, speak_message
 from .const import PRE_DEFINED_PATTERNS, Colors
-from .memory import get_context_without_updating, load_memory, update_and_get_context
+from .memory import (
+    get_context_without_updating,
+    load_memory,
+    update_and_get_context
+    )
 from .monitor import watch_printer_queue
 from .utils import get_available_printers, get_job_status_string
 
